@@ -1,5 +1,9 @@
 import numpy as np
-from pyglet.window import key
+
+try:
+    from pyglet.window import key
+except:
+    pass
 
 
 # individual agent policy
