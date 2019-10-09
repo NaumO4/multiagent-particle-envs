@@ -2,15 +2,12 @@ import argparse
 import os
 
 from multiagent.environment import MultiAgentEnv
-from multiagent.scenarios.my_Scenario import MyScenario
 from multiagent.scenarios.open_1_1_without_vel import Scenario
 from multiagent.simple_agents import StayAgent, ToPointAgent
 from multiagent.ddpg_agent import DDPGAgent
 import baselines.common.tf_util as U
 import tensorflow as tf
 import evaluate_models
-import numpy as np
-from mpi4py import MPI
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--learning_rate', default=0.001, type=float)
