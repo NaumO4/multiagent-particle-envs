@@ -4,13 +4,15 @@ import utilities
 from multiagent.scenario import BaseScenario
 from multiagent.core import World, Agent, Landmark
 
+
 class MyScenario(BaseScenario):
     def make_world(self, name, num_good_agents=0, num_adversaries=0, is_random_states_for_new_agent=False,
-                   bounds=False):
+                   bounds=False, REWARD_FOR_COLISION=10, adv_speed=1.5, good_speed=0.7):
         self.name = name
         self.bounds = bounds
         self.is_random_states_for_new_agent = is_random_states_for_new_agent
-        self.REWARD_FOR_COLISION = 2
+        self.REWARD_FOR_COLISION = REWARD_FOR_COLISION
+        self.evaluate = False
         world = World()
         # set any world properties first
         world.dim_c = 2
@@ -25,10 +27,10 @@ class MyScenario(BaseScenario):
             agent.collide = True
             agent.silent = True
             agent.adversary = True if i < num_adversaries else False
-            agent.size = 0.075 if agent.adversary else 0.05
+            agent.size = 0.02 if agent.adversary else 0.02
             agent.accel = 3.0 if agent.adversary else 4.0
             # agent.accel = 20.0 if agent.adversary else 25.0
-            agent.max_speed = 1.5 if agent.adversary else 1.0
+            agent.max_speed = adv_speed if agent.adversary else good_speed
         # add landmarks
         world.landmarks = [Landmark() for i in range(num_landmarks)]
         for i, landmark in enumerate(world.landmarks):
@@ -161,3 +163,6 @@ class MyScenario(BaseScenario):
                 if self.is_collision(agent, agent2):
                     return True
         return False
+
+    def distance(self, agent1, agent2):
+        return np.sqrt(np.sum(np.square(agent1.state.p_pos - agent2.state.p_pos)))

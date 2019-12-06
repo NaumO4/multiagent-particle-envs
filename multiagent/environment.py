@@ -13,7 +13,7 @@ class MultiAgentEnv(gym.Env):
 
     def __init__(self, world, reset_callback=None, reward_callback=None,
                  observation_callback=None, info_callback=None,
-                 done_callback=None, shared_viewer=True):
+                 done_callback=None, collision_callback=None, shared_viewer=True):
 
         self.world = world
         self.agents = self.world.policy_agents
@@ -25,6 +25,8 @@ class MultiAgentEnv(gym.Env):
         self.observation_callback = observation_callback
         self.info_callback = info_callback
         self.done_callback = done_callback
+        self.collision_callback = collision_callback
+
         # environment parameters
         self.discrete_action_space = True
         # if true, action is a number 0...N, otherwise action is a one-hot N-dimensional vector
@@ -42,7 +44,7 @@ class MultiAgentEnv(gym.Env):
             total_action_space = []
             # physical action space
             if self.discrete_action_space:
-                u_action_space = spaces.Discrete(world.dim_p * 2 + 1)
+                u_action_space = spaces.Discrete(world.dim_p * 2)
             else:
                 u_action_space = spaces.Box(low=-agent.u_range, high=+agent.u_range, shape=(world.dim_p,), dtype=np.float32)
             if agent.movable:
@@ -134,6 +136,11 @@ class MultiAgentEnv(gym.Env):
             return False
         return self.done_callback(agent, self.world)
 
+    def _is_collision(self, agent1, agent2):
+        if self.done_callback is None:
+            return False
+        return self.collision_callback(agent1, agent2)
+
     # get reward for a particular agent
     def _get_reward(self, agent):
         if self.reward_callback is None:
@@ -171,8 +178,8 @@ class MultiAgentEnv(gym.Env):
                     action[0][:] = 0.0
                     action[0][d] = 1.0
                 if self.discrete_action_space:
-                    agent.action.u[0] += action[0][1] - action[0][2]
-                    agent.action.u[1] += action[0][3] - action[0][4]
+                    agent.action.u[0] += action[0][0] - action[0][1]#action[0][1] - action[0][2]
+                    agent.action.u[1] += action[0][2] - action[0][3]#action[0][3] - action[0][4]
                 else:
                     agent.action.u = action[0]
             sensitivity = 5.0

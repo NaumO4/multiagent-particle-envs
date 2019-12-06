@@ -8,30 +8,20 @@ class Scenario(MyScenario):
 
     def make_world(self):
         self.REWARD_FOR_COLISION = 500
-        name = 'open_1_1_without_vel_REWARD_FOR_COLISION_' + str(self.REWARD_FOR_COLISION)
-        world = super(Scenario, self).make_world(name, 1, 1, is_random_states_for_new_agent=True, bounds=False)
-        world.step = self.step_without_velocity(world)
+        name = 'open_1_1_with_force_pursuit_know_vel.py_REWARD_FOR_COLISION_' + str(self.REWARD_FOR_COLISION)
+        world = super(Scenario, self).make_world(name, 1, 1, is_random_states_for_new_agent=False, bounds=False, REWARD_FOR_COLISION=self.REWARD_FOR_COLISION)
+        world.step = self.step(world)
+
         return world
 
-    def step_without_velocity(self, world):
-        def step_without_velocity():
+    def step(self, world):
+        original_step = world.step
+        def step():
             if self.evaluate:
                 world.agents[1].action.u = np.array([1.0, 0])
-            for agent in world.scripted_agents:
-                agent.action = agent.action_callback(agent, self)
-                # gather forces applied to entities
-            for agent in world.agents:
-                speed = agent.action.u
-                if np.sqrt(np.square(speed[0]) + np.square(speed[1])) != 0:
-                    speed = speed / np.sqrt(np.square(speed[0]) + np.square(speed[1])) * agent.max_speed
-                else:
-                    print(('Speed equal: ' + str(speed[0]) + ' and ' + str(speed[1])))
-                agent.state.p_pos += speed * world.dt
-                agent.state.p_vel = speed
-            for agent in world.agents:
-                world.update_agent_state(agent)
+            original_step()
 
-        return step_without_velocity
+        return step
 
     def reset_world(self, world):
         # random properties for agents
@@ -41,7 +31,7 @@ class Scenario(MyScenario):
         for i, landmark in enumerate(world.landmarks):
             landmark.color = np.array([0.25, 0.25, 0.25])
         # set random initial states
-        if self.is_random_states_for_new_agent and self.evaluate is not None and not self.evaluate:
+        if self.is_random_states_for_new_agent and not self.evaluate:
             for agent in world.agents:
                 agent.state.p_pos = np.random.uniform(-1, +1, world.dim_p)
                 agent.state.p_vel = np.zeros(world.dim_p)
@@ -78,7 +68,8 @@ class Scenario(MyScenario):
             if not other.adversary:
                 other_vel.append(other.state.p_vel)
         other_pos = np.array(other_pos)
-        if np.sqrt(np.sum(np.square(other_pos))) != 0:
-            other_pos = other_pos / np.sqrt(np.sum(np.square(other_pos)))
-        other_pos = other_pos.tolist()
-        return np.concatenate(other_pos)  # if len(entity_pos) else other_pos
+        # if np.sqrt(np.sum(np.square(other_pos))) != 0:
+        #     other_pos = other_pos / np.sqrt(np.sum(np.square(other_pos)))
+        other_pos = other_pos.flatten()
+        other_vel = np.array(other_vel).flatten()
+        return np.concatenate([other_pos, other_vel])
